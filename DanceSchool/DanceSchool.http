@@ -1,0 +1,6 @@
+@DANCE_SCHOOL_HostAddress = http://localhost:5133
+
+GET {{DANCE_SCHOOL_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

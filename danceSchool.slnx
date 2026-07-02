@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="../../../../../../../../projects/DANCE_SCHOOL/DANCE_SCHOOL/DanceSchool.Business/DanceSchool.Business.csproj" />
+  <Project Path="../../../../../../../../projects/DANCE_SCHOOL/DANCE_SCHOOL/DanceSchool.DataAccess/DanceSchool.DataAccess.csproj" />
+  <Project Path="../../../../../../../../projects/DANCE_SCHOOL/DANCE_SCHOOL/DanceSchool.Integration.Tests/DanceSchool.Integration.Tests.csproj" Id="dc767d60-5b6d-4a0a-bc16-450865cae118" />
+  <Project Path="../../../../../../../../projects/DANCE_SCHOOL/DANCE_SCHOOL/DanceSchool.UnitTests/DanceSchool.UnitTests.csproj" Id="777f161e-eef1-46ac-a0f8-b6884b3f2472" />
+  <Project Path="../../../../../../../../projects/DANCE_SCHOOL/DANCE_SCHOOL/DanceSchool/DanceSchool.csproj" />
+</Solution>
