@@ -3,6 +3,7 @@ using System;
 using DanceSchool.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DanceSchool.DataAccess.Migrations
 {
     [DbContext(typeof(DanceSchoolDbContext))]
-    partial class DanceSchoolDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260702132608_ConversationMemberRemoveId")]
+    partial class ConversationMemberRemoveId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -479,79 +482,6 @@ namespace DanceSchool.DataAccess.Migrations
                         .HasDatabaseName("ix_qrtz_triggers_sched_name_job_name_job_group");
 
                     b.ToTable("qrtz_triggers", "quartz");
-                });
-
-            modelBuilder.Entity("DanceSchool.DataAccess.Entities.Attendances.Attendance", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("GroupId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("group_id");
-
-                    b.Property<bool>("IsPresent")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_present");
-
-                    b.Property<DateTimeOffset>("MarkedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("marked_at");
-
-                    b.Property<Guid>("MarkedByUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("marked_by_user_id");
-
-                    b.Property<DateOnly>("SessionDate")
-                        .HasColumnType("date")
-                        .HasColumnName("session_date");
-
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("student_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_attendances");
-
-                    b.HasIndex("StudentId")
-                        .HasDatabaseName("ix_attendances_student_id");
-
-                    b.HasIndex("GroupId", "StudentId", "SessionDate")
-                        .IsUnique()
-                        .HasDatabaseName("ix_attendances_group_id_student_id_session_date");
-
-                    b.ToTable("attendances", (string)null);
-                });
-
-            modelBuilder.Entity("DanceSchool.DataAccess.Entities.Attendances.StudentPoints", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int>("Points")
-                        .HasColumnType("integer")
-                        .HasColumnName("points");
-
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("student_id");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_student_points");
-
-                    b.HasIndex("StudentId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_student_points_student_id");
-
-                    b.ToTable("student_points", (string)null);
                 });
 
             modelBuilder.Entity("DanceSchool.DataAccess.Entities.Auth.PasswordResetToken", b =>
@@ -1049,39 +979,6 @@ namespace DanceSchool.DataAccess.Migrations
                         .HasConstraintName("fk_qrtz_triggers_qrtz_job_details_sched_name_job_name_job_group");
 
                     b.Navigation("JobDetail");
-                });
-
-            modelBuilder.Entity("DanceSchool.DataAccess.Entities.Attendances.Attendance", b =>
-                {
-                    b.HasOne("DanceSchool.DataAccess.Entities.Courses.Group", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_attendances_groups_group_id");
-
-                    b.HasOne("DanceSchool.DataAccess.Entities.Users.User", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_attendances_users_student_id");
-
-                    b.Navigation("Group");
-
-                    b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("DanceSchool.DataAccess.Entities.Attendances.StudentPoints", b =>
-                {
-                    b.HasOne("DanceSchool.DataAccess.Entities.Users.User", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_student_points_users_student_id");
-
-                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("DanceSchool.DataAccess.Entities.Auth.PasswordResetToken", b =>

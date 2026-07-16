@@ -1,10 +1,12 @@
 ﻿using DanceSchool.Business.Configurations;
+using DanceSchool.Business.Interfaces.Attendances;
 using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.Business.Interfaces.Chat;
 using DanceSchool.Business.Interfaces.Common;
 using DanceSchool.Business.Interfaces.Courses;
 using DanceSchool.Business.Jobs;
 using DanceSchool.Business.Models.Auth;
+using DanceSchool.Business.Services.Attendances;
 using DanceSchool.Business.Services.Auth;
 using DanceSchool.Business.Services.Chat;
 using DanceSchool.Business.Services.Common;
@@ -86,6 +88,9 @@ public static class ServiceExtensions
 
         //Chat
         services.AddScoped<IChatService, ChatService>();
+
+        //Attendance
+        services.AddScoped<IAttendanceService, AttendanceService>();
 
         // Other
         services.AddScoped<DanceStyleService>();

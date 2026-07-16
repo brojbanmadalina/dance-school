@@ -1,6 +1,7 @@
 ﻿using AppAny.Quartz.EntityFrameworkCore.Migrations;
 using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
 using DanceSchool.DataAccess.Entities;
+using DanceSchool.DataAccess.Entities.Attendances;
 using DanceSchool.DataAccess.Entities.Auth;
 using DanceSchool.DataAccess.Entities.Chat;
 using DanceSchool.DataAccess.Entities.Courses;
@@ -24,6 +25,8 @@ public class DanceSchoolDbContext : DbContext
     public DbSet<Conversation> Conversations { get; set; }
     public DbSet<ConversationMember> ConversationMembers { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Attendance> Attendances { get; set; }
+    public DbSet<StudentPoints> StudentPoints { get; set; }
 
     public DanceSchoolDbContext(DbContextOptions<DanceSchoolDbContext> options)
         : base(options) { }
@@ -115,7 +118,8 @@ public class DanceSchoolDbContext : DbContext
         builder.AddQuartz(q => q.UsePostgreSql());
         builder.Entity<Conversation>(entity =>
         {
-            entity.HasOne(c => c.Group)
+            entity
+                .HasOne(c => c.Group)
                 .WithMany()
                 .HasForeignKey(c => c.GroupId)
                 .OnDelete(DeleteBehavior.SetNull);
@@ -123,32 +127,59 @@ public class DanceSchoolDbContext : DbContext
 
         builder.Entity<ConversationMember>(entity =>
         {
-            entity.HasOne(m => m.Conversation)
+            entity.HasKey(m => new { m.ConversationId, m.UserId });
+            entity
+                .HasOne(m => m.Conversation)
                 .WithMany(c => c.Members)
                 .HasForeignKey(m => m.ConversationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(m => m.User)
+            entity
+                .HasOne(m => m.User)
                 .WithMany()
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(m => new { m.ConversationId, m.UserId }).IsUnique();
         });
 
         builder.Entity<Message>(entity =>
         {
-            entity.HasOne(m => m.Conversation)
+            entity
+                .HasOne(m => m.Conversation)
                 .WithMany(c => c.Messages)
                 .HasForeignKey(m => m.ConversationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(m => m.Sender)
+            entity
+                .HasOne(m => m.Sender)
                 .WithMany()
                 .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(m => new { m.ConversationId, m.SentAt });
+        });
+        builder.Entity<Attendance>(entity =>
+        {
+            entity.HasOne(a => a.Group)
+                .WithMany()
+                .HasForeignKey(a => a.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(a => a.Student)
+                .WithMany()
+                .HasForeignKey(a => a.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(a => new { a.GroupId, a.StudentId, a.SessionDate }).IsUnique();
+        });
+
+        builder.Entity<StudentPoints>(entity =>
+        {
+            entity.HasOne(p => p.Student)
+                .WithMany()
+                .HasForeignKey(p => p.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(p => p.StudentId).IsUnique();
         });
     }
 }

@@ -6,7 +6,6 @@ namespace DanceSchool.DataAccess.Entities.Chat
     [Table("conversation_members")]
     public class ConversationMember
     {
-        public Guid Id { get; set; }
         public Guid ConversationId { get; set; }
         public Conversation Conversation { get; set; }
         public Guid UserId { get; set; }
