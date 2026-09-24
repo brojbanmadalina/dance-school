@@ -1,4 +1,5 @@
 ﻿using DanceSchool.Business.Constants;
+using DanceSchool.Business.Events;
 using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.Business.Interfaces.Common;
 using DanceSchool.Business.Interfaces.Courses;
@@ -17,17 +18,20 @@ namespace DanceSchool.Business.Services.Courses
         private readonly IUserProvider _userProvider;
         private readonly IValidator<CreateCourseRequest> _createCourseValidator;
         private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly IEventPublisher _eventPublisher;
 
         public CourseService(
             DanceSchoolDbContext db,
             IUserProvider userProvider,
             IValidator<CreateCourseRequest> createCourseValidator,
-            IDateTimeProvider dateTimeProvider)
+            IDateTimeProvider dateTimeProvider,
+            IEventPublisher eventPublisher)
         {
             _db = db;
             _userProvider = userProvider;
             _createCourseValidator = createCourseValidator;
             _dateTimeProvider = dateTimeProvider;
+            _eventPublisher = eventPublisher;
         }
 
         public async Task<Result<CourseResponse>> CreateCourse(CreateCourseRequest request)
@@ -53,7 +57,7 @@ namespace DanceSchool.Business.Services.Courses
 
             _db.Courses.Add(course);
             await _db.SaveChangesAsync();
-
+            await _eventPublisher.PublishAsync(new CourseCreatedEvent(course.Id, _dateTimeProvider.UtcNow));
             return Result.Ok(MapToResponse(course));
         }
 

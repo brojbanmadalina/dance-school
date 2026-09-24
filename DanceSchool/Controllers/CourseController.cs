@@ -1,22 +1,29 @@
-﻿using DanceSchool.Business.Constants;
+﻿using Asp.Versioning;
+using DanceSchool.Business.Constants;
 using DanceSchool.Business.Interfaces.Courses;
 using DanceSchool.Business.Jobs;
 using DanceSchool.Business.Models.Courses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DanceSchool.Controllers
 {
     [ApiController]
-    [Route("api/courses")]
+    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
+    [Route("api/v{version:apiVersion}/courses")]
     [Authorize]
     public class CourseController : ControllerBase
     {
         private readonly ICourseService _courseService;
+        private readonly IMemoryCache _cache;
+        private const string CoursesCacheKey = "courses_cache_v2";
 
-        public CourseController(ICourseService courseService)
+        public CourseController(ICourseService courseService, IMemoryCache cache)
         {
             _courseService = courseService;
+            _cache = cache;
         }
 
         [HttpPost]
@@ -29,6 +36,7 @@ namespace DanceSchool.Controllers
                 : Ok(result.Value);
         }
 
+        [MapToApiVersion("1.0")]
         [HttpGet]
         public async Task<IActionResult> GetCourses()
         {
@@ -37,6 +45,27 @@ namespace DanceSchool.Controllers
             return result.IsFailed
                 ? BadRequest(new { errors = result.Errors.Select(e => e.Message) })
                 : Ok(result.Value);
+        }
+
+        [MapToApiVersion("2.0")]
+        [HttpGet]
+        public IActionResult GetCoursesV2()
+        {
+            if (_cache.TryGetValue(CoursesCacheKey, out var cachedCourses))
+            {
+                return Ok(cachedCourses);
+            }
+
+            var courses = new List<object>
+            {
+                new { Id = Guid.NewGuid(), Name = "Salsa", Description = "" },
+                new { Id = Guid.NewGuid(), Name = "Bachata Sensual", Description = "" },
+                new { Id = Guid.NewGuid(), Name = "Tango Argentinian", Description = "" },
+            };
+
+            _cache.Set(CoursesCacheKey, courses, TimeSpan.FromMinutes(5));
+
+            return Ok(courses);
         }
 
         [HttpGet("{courseId}")]

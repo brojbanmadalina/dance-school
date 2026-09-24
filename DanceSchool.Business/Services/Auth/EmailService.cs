@@ -75,5 +75,26 @@ namespace DanceSchool.Business.Services.Auth
 
             await client.SendMailAsync(message);
         }
+
+        public async Task SendNewCourseEmail(string toEmail, string firstName, string courseName)
+        {
+            var model = new { first_name = firstName, course_name = courseName, year = _dateTimeProvider.UtcNow.Year };
+            var body = await _templateService.RenderAsync("new-course.liquid", model);
+
+            var message = new MailMessage();
+            message.From = new MailAddress(_settings.SenderEmail, _settings.SenderName);
+            message.To.Add(toEmail);
+            message.Subject = $"Curs nou disponibil: {courseName}";
+            message.Body = body;
+            message.IsBodyHtml = true;
+
+            var client = new SmtpClient(_settings.SmtpServer, _settings.Port)
+            {
+                Credentials = new NetworkCredential(_settings.Username, _settings.Password),
+                EnableSsl = true
+            };
+
+            await client.SendMailAsync(message);
+        }
     }
 }

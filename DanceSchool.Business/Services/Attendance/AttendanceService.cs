@@ -144,6 +144,44 @@ namespace DanceSchool.Business.Services.Attendances
             return Result.Ok(result.Value.First());
         }
 
+        public async Task<Result<SessionAttendanceResponse>> MarkStudent(
+            Guid instructorId,
+            Guid groupId,
+            Guid studentId,
+            MarkStudentRequest request
+        )
+        {
+            var request_ = new SaveAttendanceRequest
+            {
+                GroupId = groupId,
+                SessionDate = request.SessionDate,
+                Marks = new List<AttendanceMarkRequest>
+                {
+                    new() { StudentId = studentId, IsPresent = request.IsPresent }
+                }
+            };
+
+            return await SaveSession(instructorId, request_);
+        }
+
+        public async Task<Result<SessionAttendanceResponse>> BulkMarkPresent(
+            Guid instructorId,
+            Guid groupId,
+            BulkMarkPresentRequest request
+        )
+        {
+            var request_ = new SaveAttendanceRequest
+            {
+                GroupId = groupId,
+                SessionDate = request.SessionDate,
+                Marks = request.StudentIds
+                    .Select(id => new AttendanceMarkRequest { StudentId = id, IsPresent = true })
+                    .ToList()
+            };
+
+            return await SaveSession(instructorId, request_);
+        }
+
         public async Task<Result<StudentPointsResponse>> GetPoints(Guid studentId)
         {
             var student = await _db.Users.FirstOrDefaultAsync(u => u.Id == studentId);

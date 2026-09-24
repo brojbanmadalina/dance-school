@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using Asp.Versioning;
+using System.Security.Claims;
 using DanceSchool.Business.Interfaces.Attendances;
 using DanceSchool.Business.Models.Attendance;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace DanceSchool.Controllers
 {
     [ApiController]
-    [Route("api/attendance")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/attendance")]
     public class AttendanceController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
@@ -35,6 +37,26 @@ namespace DanceSchool.Controllers
         public async Task<IActionResult> SaveSession(SaveAttendanceRequest request)
         {
             var result = await _attendanceService.SaveSession(CurrentUserId, request);
+            return result.IsFailed
+                ? BadRequest(new { errors = result.Errors.Select(e => e.Message) })
+                : Ok(result.Value);
+        }
+
+        [Authorize(Roles = "Instructor,Admin")]
+        [HttpPut("sessions/{groupId}/students/{studentId}")]
+        public async Task<IActionResult> MarkStudent(Guid groupId, Guid studentId, MarkStudentRequest request)
+        {
+            var result = await _attendanceService.MarkStudent(CurrentUserId, groupId, studentId, request);
+            return result.IsFailed
+                ? BadRequest(new { errors = result.Errors.Select(e => e.Message) })
+                : Ok(result.Value);
+        }
+
+        [Authorize(Roles = "Instructor,Admin")]
+        [HttpPost("sessions/{groupId}/bulk-present")]
+        public async Task<IActionResult> BulkMarkPresent(Guid groupId, BulkMarkPresentRequest request)
+        {
+            var result = await _attendanceService.BulkMarkPresent(CurrentUserId, groupId, request);
             return result.IsFailed
                 ? BadRequest(new { errors = result.Errors.Select(e => e.Message) })
                 : Ok(result.Value);
