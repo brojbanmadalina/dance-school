@@ -40,6 +40,7 @@ namespace DanceSchool.Controllers
         }
 
         [HttpDelete("{studentId}")]
+        [Authorize(Roles = "Instructor,Admin")]
         public async Task<IActionResult> RemoveStudent(Guid groupId, Guid studentId)
         {
             var result = await _enrollmentService.RemoveStudent(groupId, studentId);

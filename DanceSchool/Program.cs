@@ -3,7 +3,8 @@ using Asp.Versioning.ApiExplorer;
 using DanceSchool.Api.Consumers;
 using DanceSchool.Api.Hubs;
 using DanceSchool.Api.Services;
-using DanceSchool.Business.Configurations;
+using DanceSchool.Api.Configurations;
+using DanceSchool.Api.Extensions;
 using DanceSchool.Business.Extensions;
 using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.Business.Interfaces.Common;
@@ -19,12 +20,12 @@ using Quartz;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// servicii de baza
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddMemoryCache();
+builder.Services.AddMemoryCache(); //cache in RAM, folosit in CourseController v2
 
-// API Versioning
+// Versionare API (vezi CourseController/AttendanceController)
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -38,7 +39,7 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Swagger multi-versiune
+// Swagger (câte un document per versiune)
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "DanceSchool API", Version = "v1" });
@@ -52,14 +53,14 @@ builder.Services.AddDbContext<DanceSchoolDbContext>(options =>
         .UseSnakeCaseNamingConvention()
 );
 
-builder.Services.ConfigureOptions<JwtOptionsSetup>();
+// JWT
 builder.Services.AddJwt();
 
-//Services
-builder.Services.AddAppServices(builder.Configuration, builder.Environment);
-builder.Services.AddScoped<IUserProvider, UserProvider>();
+// Servicii business + configurare/infrastructura API
+builder.Services.AddAppServices();
+builder.Services.AddAppConfiguration(builder.Configuration, builder.Environment);
 
-//connection with rabbitmq and mass transit
+// RabbitMQ + MassTransit
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<CourseCreatedConsumer>();
@@ -71,11 +72,14 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+// IEventPublisher = abstractizare peste MassTransit, ca CourseService să nu depindă direct de RabbitMQ
 builder.Services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
+
+// Health checks (folosit de Aspire Dashboard)
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
 
-//job
+// Quartz (job-uri programate)
 builder.Services.AddQuartz(q =>
 {
     q.UsePersistentStore(store =>
@@ -106,10 +110,10 @@ builder.Services.AddQuartz(q =>
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 builder.Services.AddQuartzDashboard();
 
-//Validators
+// Validators
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
-// SignalR
+// SignalR (chat)
 builder.Services.AddSignalR();
 
 // CORS pentru chat test (HTML deschis ca fisier local)
@@ -126,6 +130,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+//Swagger UI doar în Development
 if (app.Environment.IsDevelopment())
 {
     var apiVersionDescProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
@@ -151,6 +156,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
+
 //mapam chathub-ul
 app.MapHub<ChatHub>("/chatHub");
 

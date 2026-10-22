@@ -1,73 +1,23 @@
-﻿using DanceSchool.Business.Configurations;
 using DanceSchool.Business.Interfaces.Attendances;
 using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.Business.Interfaces.Chat;
 using DanceSchool.Business.Interfaces.Common;
 using DanceSchool.Business.Interfaces.Courses;
-using DanceSchool.Business.Jobs;
-using DanceSchool.Business.Models.Auth;
+using DanceSchool.Business.Interfaces.Profile;
 using DanceSchool.Business.Services.Attendances;
 using DanceSchool.Business.Services.Auth;
 using DanceSchool.Business.Services.Chat;
 using DanceSchool.Business.Services.Common;
 using DanceSchool.Business.Services.Courses;
 using DanceSchool.Business.Services.DanceStyle;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using DanceSchool.Business.Services.UserProfile;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 namespace DanceSchool.Business.Extensions;
 
 public static class ServiceExtensions
 {
-    public static IServiceCollection AddJwt(this IServiceCollection services)
-    {
-        services.ConfigureOptions<JwtOptionsSetup>();
-
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer();
-
-        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
-            {
-                var jwt = jwtOptions.Value;
-
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwt.Issuer,
-                    ValidAudience = jwt.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwt.Key)),
-                    ClockSkew = TimeSpan.Zero
-                };
-                //chat
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Query["access_token"];
-                        var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
-                        {
-                            context.Token = accessToken;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-
-        return services;
-    }
-
-    public static IServiceCollection AddAppServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
+    public static IServiceCollection AddAppServices(this IServiceCollection services)
     {
         // Auth
         services.AddScoped<IAuthService, AuthService>();
@@ -94,19 +44,9 @@ public static class ServiceExtensions
 
         // Other
         services.AddScoped<DanceStyleService>();
-        services.AddScoped<CourseReminderJob>();
 
-        // Infrastructure
-        services.AddHttpContextAccessor();
-
-        // Config
-        services.Configure<EmailSettings>(configuration.GetSection("AuthSettings:EmailSettings"));
-        services.Configure<LockoutSettings>(configuration.GetSection("AuthSettings:LockoutSettings"));
-        services.Configure<ForgotPasswordSettings>(configuration.GetSection("AuthSettings:ForgotPasswordSettings"));
-
-        services.AddScoped<EmailTemplateService>(_ => new EmailTemplateService(
-            Path.Combine(environment.ContentRootPath, "Templates")
-        ));
+        //User profile
+        services.AddScoped<IProfileService, UserProfileService>();
 
         return services;
     }

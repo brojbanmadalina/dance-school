@@ -1,4 +1,5 @@
-﻿using DanceSchool.Business.Interfaces.Common;
+﻿using DanceSchool.Business.Interfaces.Auth;
+using DanceSchool.Business.Interfaces.Common;
 using DanceSchool.Business.Interfaces.Courses;
 using DanceSchool.Business.Models.Courses;
 using DanceSchool.Business.Models.Groups;
@@ -13,11 +14,13 @@ namespace DanceSchool.Business.Services.Courses
     {
         private readonly DanceSchoolDbContext _db;
         private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly IUserProvider _userProvider;
 
-        public EnrollmentService(DanceSchoolDbContext db, IDateTimeProvider dateTimeProvider)
+        public EnrollmentService(DanceSchoolDbContext db, IDateTimeProvider dateTimeProvider, IUserProvider userProvider)
         {
             _db = db;
             _dateTimeProvider = dateTimeProvider;
+            _userProvider = userProvider;
         }
 
         public async Task<Result<EnrollmentResponse>> EnrollStudent(EnrollStudentRequest request)
@@ -76,6 +79,21 @@ namespace DanceSchool.Business.Services.Courses
             ).ToList();
 
             return Result.Ok(responses);
+        }
+
+        public async Task<Result> LeaveGroup(Guid enrollmentId)
+        {
+            var userId = _userProvider.UserId;
+
+            var enrollment = await _db.Enrollments
+                .FirstOrDefaultAsync(e => e.Id == enrollmentId);
+            if (enrollment == null || enrollment.StudentId != userId)
+                return Result.Fail("Enrollment not found");
+
+            _db.Enrollments.Remove(enrollment);
+            await _db.SaveChangesAsync();
+
+            return Result.Ok();
         }
 
         public async Task<Result> RemoveStudent(Guid groupId, Guid studentId)

@@ -2,6 +2,7 @@
 using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.DataAccess.Data;
 using DanceSchool.DataAccess.Entities.Auth;
+using DanceSchool.DataAccess.Entities.Courses;
 using DanceSchool.DataAccess.Entities.Users;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,10 @@ namespace DanceSchool.Api.Consumers
         private readonly IEmailService _emailService;
         private readonly ILogger<CourseCreatedConsumer> _logger;
 
-        public CourseCreatedConsumer(DanceSchoolDbContext db, IEmailService emailService, ILogger<CourseCreatedConsumer> logger)
+        public CourseCreatedConsumer(
+            DanceSchoolDbContext db,
+            IEmailService emailService,
+            ILogger<CourseCreatedConsumer> logger)
         {
             _db = db;
             _emailService = emailService;
@@ -39,11 +43,39 @@ namespace DanceSchool.Api.Consumers
             if (instructor is not null) recipients.Add(instructor);
             recipients.AddRange(students);
 
+            // users that have already been notified about this course
+            var alreadyNotified = (await _db.CourseNotifications
+                    .Where(n => n.CourseId == course.Id)
+                    .Select(n => n.UserId)
+                    .ToListAsync())
+                .ToHashSet();
+
+            var sentCount = 0;
+            var skippedCount = 0;
+
             foreach (var user in recipients)
             {
+                if (alreadyNotified.Contains(user.Id))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
                 try
                 {
                     await _emailService.SendNewCourseEmail(user.Email, user.FirstName, course.Name);
+
+                    // we save it after sending the email to avoid sending multiple emails in case of failure
+                    _db.CourseNotifications.Add(new CourseNotification
+                    {
+                        Id = Guid.NewGuid(),
+                        CourseId = course.Id,
+                        UserId = user.Id,
+                        SentAt = DateTimeOffset.UtcNow,
+                    });
+                    await _db.SaveChangesAsync();
+
+                    sentCount++;
                 }
                 catch (Exception ex)
                 {
@@ -51,7 +83,9 @@ namespace DanceSchool.Api.Consumers
                 }
             }
 
-            _logger.LogInformation("Notified {Count} users about course {CourseId}", recipients.Count, course.Id);
+            _logger.LogInformation(
+                "Course {CourseId}: sent {Sent} emails, skipped {Skipped} already notified, {Total} recipients total.",
+                course.Id, sentCount, skippedCount, recipients.Count);
         }
     }
 }

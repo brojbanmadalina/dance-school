@@ -9,5 +9,6 @@ namespace DanceSchool.Business.Interfaces.Courses
         Task<Result<EnrollmentResponse>> EnrollStudent(EnrollStudentRequest request);
         Task<Result<List<EnrollmentResponse>>> GetGroupStudents(Guid groupId);
         Task<Result> RemoveStudent(Guid groupId, Guid studentId);
+        Task<Result> LeaveGroup(Guid enrollmentId);
     }
 }

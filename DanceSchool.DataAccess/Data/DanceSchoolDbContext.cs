@@ -27,6 +27,7 @@ public class DanceSchoolDbContext : DbContext
     public DbSet<Message> Messages { get; set; }
     public DbSet<Attendance> Attendances { get; set; }
     public DbSet<StudentPoints> StudentPoints { get; set; }
+    public DbSet<CourseNotification> CourseNotifications { get; set; }
 
     public DanceSchoolDbContext(DbContextOptions<DanceSchoolDbContext> options)
         : base(options) { }
@@ -180,6 +181,19 @@ public class DanceSchoolDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(p => p.StudentId).IsUnique();
+        });
+
+        builder.Entity<CourseNotification>(entity =>
+        {
+            entity.HasOne(n => n.Course)
+                .WithMany()
+                .HasForeignKey(n => n.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(n => new { n.CourseId, n.UserId }).IsUnique();
         });
     }
 }
