@@ -4,6 +4,6 @@
     {
         public Guid GroupId { get; set; }
         public DateOnly SessionDate { get; set; }
-        public List<AttendanceMarkRequest> Marks { get; set; } = new();
+        public List<Guid> PresentStudentIds { get; set; } = new();
     }
 }

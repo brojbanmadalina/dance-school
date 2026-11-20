@@ -42,26 +42,6 @@ namespace DanceSchool.Controllers
                 : Ok(result.Value);
         }
 
-        [Authorize(Roles = "Instructor,Admin")]
-        [HttpPut("sessions/{groupId}/students/{studentId}")]
-        public async Task<IActionResult> MarkStudent(Guid groupId, Guid studentId, MarkStudentRequest request)
-        {
-            var result = await _attendanceService.MarkStudent(CurrentUserId, groupId, studentId, request);
-            return result.IsFailed
-                ? BadRequest(new { errors = result.Errors.Select(e => e.Message) })
-                : Ok(result.Value);
-        }
-
-        [Authorize(Roles = "Instructor,Admin")]
-        [HttpPost("sessions/{groupId}/bulk-present")]
-        public async Task<IActionResult> BulkMarkPresent(Guid groupId, BulkMarkPresentRequest request)
-        {
-            var result = await _attendanceService.BulkMarkPresent(CurrentUserId, groupId, request);
-            return result.IsFailed
-                ? BadRequest(new { errors = result.Errors.Select(e => e.Message) })
-                : Ok(result.Value);
-        }
-
         [Authorize(Roles = "Student")]
         [HttpGet("points/{studentId}")]
         public async Task<IActionResult> GetPoints(Guid studentId)

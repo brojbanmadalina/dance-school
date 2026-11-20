@@ -80,98 +80,42 @@ namespace DanceSchool.Business.Services
             SaveAttendanceRequest request
         )
         {
-            var validation = await ValidateSaveSession(currentUserId, request);
-            if (validation.IsFailed)
-                return validation.ToResult<SessionAttendanceResponse>();
+            var studentIds = await ValidateSaveSession(currentUserId, request);
+            if (studentIds.IsFailed)
+                return studentIds.ToResult<SessionAttendanceResponse>();
 
+            var enrolledStudentIds = studentIds.Value;
+            var presentStudentIds = request.PresentStudentIds.Distinct().ToList();
             var now = _dateTime.UtcNow;
-            var studentIds = request.Marks.Select(m => m.StudentId).ToList();
 
-            var existingAttendances = await _db
-                .Attendances.Where(a =>
-                    a.GroupId == request.GroupId
-                    && a.SessionDate == request.SessionDate
-                    && studentIds.Contains(a.StudentId)
-                )
-                .ToDictionaryAsync(a => a.StudentId);
+            _db.Attendances.AddRange(
+                enrolledStudentIds.Select(studentId => new Attendance
+                {
+                    Id = Guid.NewGuid(),
+                    GroupId = request.GroupId,
+                    StudentId = studentId,
+                    SessionDate = request.SessionDate,
+                    IsPresent = presentStudentIds.Contains(studentId),
+                    MarkedByUserId = currentUserId,
+                    MarkedAt = now,
+                })
+            );
 
-            var pointsByStudent = await _db
-                .StudentPoints.Where(p => studentIds.Contains(p.StudentId))
-                .ToDictionaryAsync(p => p.StudentId);
+            await AddPointsForPresence(presentStudentIds, now);
 
-            foreach (var mark in request.Marks)
+            try
             {
-                existingAttendances.TryGetValue(mark.StudentId, out var attendance);
-                var pointsChange = CalculatePointsChange(attendance?.IsPresent, mark.IsPresent);
-
-                if (attendance == null)
-                {
-                    _db.Attendances.Add(
-                        new Attendance
-                        {
-                            Id = Guid.NewGuid(),
-                            GroupId = request.GroupId,
-                            StudentId = mark.StudentId,
-                            SessionDate = request.SessionDate,
-                            IsPresent = mark.IsPresent,
-                            MarkedByUserId = currentUserId,
-                            MarkedAt = now,
-                        }
-                    );
-                }
-                else if (attendance.IsPresent != mark.IsPresent)
-                {
-                    attendance.IsPresent = mark.IsPresent;
-                    attendance.MarkedByUserId = currentUserId;
-                    attendance.MarkedAt = now;
-                }
-
-                if (pointsChange != 0)
-                    ApplyPointsChange(pointsByStudent, mark.StudentId, pointsChange, now);
+                await _db.SaveChangesAsync();
             }
-
-            await _db.SaveChangesAsync();
+            catch (DbUpdateException)
+            {
+                return Result.Fail<SessionAttendanceResponse>(
+                    "Attendance for this session has already been saved"
+                );
+            }
 
             var result = await GetSessions(currentUserId, request.SessionDate, request.GroupId);
             return Result.Ok(result.Value.First());
-        }
-
-        public async Task<Result<SessionAttendanceResponse>> MarkStudent(
-            Guid instructorId,
-            Guid groupId,
-            Guid studentId,
-            MarkStudentRequest request
-        )
-        {
-            var request_ = new SaveAttendanceRequest
-            {
-                GroupId = groupId,
-                SessionDate = request.SessionDate,
-                Marks = new List<AttendanceMarkRequest>
-                {
-                    new() { StudentId = studentId, IsPresent = request.IsPresent }
-                }
-            };
-
-            return await SaveSession(instructorId, request_);
-        }
-
-        public async Task<Result<SessionAttendanceResponse>> BulkMarkPresent(
-            Guid instructorId,
-            Guid groupId,
-            BulkMarkPresentRequest request
-        )
-        {
-            var request_ = new SaveAttendanceRequest
-            {
-                GroupId = groupId,
-                SessionDate = request.SessionDate,
-                Marks = request.StudentIds
-                    .Select(id => new AttendanceMarkRequest { StudentId = id, IsPresent = true })
-                    .ToList()
-            };
-
-            return await SaveSession(instructorId, request_);
         }
 
         public async Task<Result<StudentPointsResponse>> GetPoints(Guid studentId)
@@ -193,7 +137,7 @@ namespace DanceSchool.Business.Services
             );
         }
 
-        private async Task<Result> ValidateSaveSession(
+        private async Task<Result<List<Guid>>> ValidateSaveSession(
             Guid currentUserId,
             SaveAttendanceRequest request
         )
@@ -209,55 +153,47 @@ namespace DanceSchool.Business.Services
             if (instructorId != currentUserId)
                 return Result.Fail("You are not the instructor of this group");
 
-            if (request.Marks.Select(m => m.StudentId).Distinct().Count() != request.Marks.Count)
-                return Result.Fail("A student appears more than once in the request");
+            var alreadySaved = await _db.Attendances.AnyAsync(a =>
+                a.GroupId == request.GroupId && a.SessionDate == request.SessionDate
+            );
 
-            var studentIds = request.Marks.Select(m => m.StudentId).ToList();
+            if (alreadySaved)
+                return Result.Fail("Attendance for this session has already been saved");
 
-            var enrolledCount = await _db
-                .Enrollments.Where(e =>
-                    e.GroupId == request.GroupId && studentIds.Contains(e.StudentId)
-                )
-                .CountAsync();
+            var enrolledStudentIds = await _db
+                .Enrollments.Where(e => e.GroupId == request.GroupId)
+                .Select(e => e.StudentId)
+                .ToListAsync();
 
-            if (enrolledCount != studentIds.Count)
-                return Result.Fail("A mark references a student not enrolled in this group");
+            if (request.PresentStudentIds.Any(id => !enrolledStudentIds.Contains(id)))
+                return Result.Fail("A present student is not enrolled in this group");
 
-            return Result.Ok();
+            return Result.Ok(enrolledStudentIds);
         }
 
-        private static int CalculatePointsChange(bool? previousIsPresent, bool isPresent)
+        private async Task AddPointsForPresence(List<Guid> presentStudentIds, DateTimeOffset now)
         {
-            if (previousIsPresent == isPresent)
-                return 0;
+            var existingPoints = await _db
+                .StudentPoints.Where(p => presentStudentIds.Contains(p.StudentId))
+                .ToListAsync();
 
-            if (previousIsPresent is null)
-                return isPresent ? 1 : 0;
-
-            return isPresent ? 1 : -1;
-        }
-
-        private void ApplyPointsChange(
-            Dictionary<Guid, StudentPoints> pointsByStudent,
-            Guid studentId,
-            int pointsChange,
-            DateTimeOffset now
-        )
-        {
-            if (!pointsByStudent.TryGetValue(studentId, out var points))
+            foreach (var points in existingPoints)
             {
-                points = new StudentPoints
+                points.Points += 1;
+                points.UpdatedAt = now;
+            }
+
+            var studentsWithoutPoints = presentStudentIds.Except(existingPoints.Select(p => p.StudentId));
+
+            _db.StudentPoints.AddRange(
+                studentsWithoutPoints.Select(studentId => new StudentPoints
                 {
                     Id = Guid.NewGuid(),
                     StudentId = studentId,
-                    Points = 0,
-                };
-                _db.StudentPoints.Add(points);
-                pointsByStudent[studentId] = points;
-            }
-
-            points.Points = Math.Max(0, points.Points + pointsChange);
-            points.UpdatedAt = now;
+                    Points = 1,
+                    UpdatedAt = now,
+                })
+            );
         }
 
         private static SessionAttendanceResponse BuildResponse(
