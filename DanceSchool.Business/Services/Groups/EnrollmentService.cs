@@ -1,6 +1,7 @@
 ﻿using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.Business.Interfaces.Common;
-using DanceSchool.Business.Interfaces.Courses;
+using DanceSchool.Business.Interfaces;
+using DanceSchool.Business.Interfaces.Groups;
 using DanceSchool.Business.Models.Courses;
 using DanceSchool.Business.Models.Groups;
 using DanceSchool.DataAccess.Data;
@@ -8,7 +9,7 @@ using DanceSchool.DataAccess.Entities.Courses;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace DanceSchool.Business.Services.Courses
+namespace DanceSchool.Business.Services.Groups
 {
     public class EnrollmentService : IEnrollmentService
     {
@@ -42,8 +43,8 @@ namespace DanceSchool.Business.Services.Courses
             if (alreadyEnrolled)
                 return Result.Fail<EnrollmentResponse>("Student is already enrolled in this group");
 
-            var studentExists = await _db.Users.AnyAsync(u => u.Id == request.StudentId);
-            if (!studentExists)
+            var student = await _db.Users.FindAsync(request.StudentId);
+            if (student == null)
                 return Result.Fail<EnrollmentResponse>("Student not found");
 
             var enrollment = new Enrollment
@@ -56,8 +57,6 @@ namespace DanceSchool.Business.Services.Courses
 
             _db.Enrollments.Add(enrollment);
             await _db.SaveChangesAsync();
-
-            var student = await _db.Users.FirstAsync(u => u.Id == request.StudentId);
 
             return Result.Ok(MapToResponse(enrollment, student.Email, student.FirstName, student.LastName));
         }

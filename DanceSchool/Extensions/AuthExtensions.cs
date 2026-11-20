@@ -1,4 +1,4 @@
-using DanceSchool.Api.Configurations;
+using DanceSchool.Configurations;
 using DanceSchool.Business.Models.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace DanceSchool.Api.Extensions;
+namespace DanceSchool.Extensions;
 
 public static class AuthExtensions
 {

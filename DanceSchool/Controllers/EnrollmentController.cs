@@ -1,4 +1,5 @@
-﻿using DanceSchool.Business.Interfaces.Courses;
+﻿using DanceSchool.Business.Interfaces;
+using DanceSchool.Business.Interfaces.Groups;
 using DanceSchool.Business.Models.Courses;
 using DanceSchool.Business.Models.Groups;
 using Microsoft.AspNetCore.Authorization;

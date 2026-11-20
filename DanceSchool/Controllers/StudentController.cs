@@ -1,9 +1,9 @@
-﻿using DanceSchool.Business.Contracts.Student;
+﻿using DanceSchool.Business.Models;
 using DanceSchool.Business.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DanceSchool.Api.Controllers
+namespace DanceSchool.Controllers
 {
 
     [ApiController]

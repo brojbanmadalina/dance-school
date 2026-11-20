@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using DanceSchool.Business.Interfaces.Auth;
 
-namespace DanceSchool.Api.Services
+namespace DanceSchool.Services
 {
     public class UserProvider : IUserProvider
     {

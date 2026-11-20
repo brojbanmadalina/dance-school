@@ -1,6 +1,6 @@
 ﻿using Asp.Versioning;
 using System.Security.Claims;
-using DanceSchool.Business.Interfaces.Attendances;
+using DanceSchool.Business.Interfaces;
 using DanceSchool.Business.Models.Attendance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

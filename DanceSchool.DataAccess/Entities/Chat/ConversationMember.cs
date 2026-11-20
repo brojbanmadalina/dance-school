@@ -1,9 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using DanceSchool.DataAccess.Entities.Users;
+﻿using DanceSchool.DataAccess.Entities.Users;
 
 namespace DanceSchool.DataAccess.Entities.Chat
 {
-    [Table("conversation_members")]
     public class ConversationMember
     {
         public Guid ConversationId { get; set; }

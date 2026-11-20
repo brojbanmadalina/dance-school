@@ -1,10 +1,10 @@
-﻿using DanceSchool.Business.Interfaces.Chat;
+﻿using DanceSchool.Business.Interfaces;
 using DanceSchool.Business.Models.Chat;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace DanceSchool.Controllers
+namespace DanceSchool.Controllers.Chat
 {
     [ApiController]
     [Route("api/chat")]

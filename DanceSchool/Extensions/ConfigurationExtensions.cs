@@ -2,9 +2,9 @@ using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.Business.Jobs;
 using DanceSchool.Business.Models.Auth;
 using DanceSchool.Business.Services.Auth;
-using DanceSchool.Api.Services;
+using DanceSchool.Services;
 
-namespace DanceSchool.Api.Extensions;
+namespace DanceSchool.Extensions;
 
 public static class ConfigurationExtensions
 {

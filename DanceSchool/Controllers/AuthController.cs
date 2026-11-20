@@ -3,7 +3,7 @@ using DanceSchool.Business.Models.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DanceSchool.Api.Controllers
+namespace DanceSchool.Controllers
 {
     [ApiController]
     [Route("api/auth")]

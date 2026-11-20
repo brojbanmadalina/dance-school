@@ -1,7 +1,8 @@
 ﻿using DanceSchool.Business.Constants;
 using DanceSchool.Business.Interfaces.Auth;
 using DanceSchool.Business.Interfaces.Common;
-using DanceSchool.Business.Interfaces.Courses;
+using DanceSchool.Business.Interfaces;
+using DanceSchool.Business.Interfaces.Groups;
 using DanceSchool.Business.Models.Courses;
 using DanceSchool.Business.Models.Groups;
 using DanceSchool.DataAccess.Data;
@@ -10,7 +11,7 @@ using FluentResults;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
-namespace DanceSchool.Business.Services.Courses
+namespace DanceSchool.Business.Services.Groups
 {
     public class GroupService : IGroupService
     {

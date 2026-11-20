@@ -1,10 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using DanceSchool.DataAccess.Entities.Courses;
+﻿using DanceSchool.DataAccess.Entities.Courses;
 using DanceSchool.DataAccess.Entities.Users;
 
 namespace DanceSchool.DataAccess.Entities.Attendances
 {
-    [Table("attendances")]
     public class Attendance
     {
         public Guid Id { get; set; }

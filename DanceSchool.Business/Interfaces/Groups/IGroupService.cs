@@ -2,7 +2,7 @@
 using DanceSchool.Business.Models.Groups;
 using FluentResults;
 
-namespace DanceSchool.Business.Interfaces.Courses
+namespace DanceSchool.Business.Interfaces.Groups
 {
     public interface IGroupService
     {

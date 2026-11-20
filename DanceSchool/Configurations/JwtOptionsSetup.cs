@@ -1,4 +1,4 @@
-namespace DanceSchool.Api.Configurations
+namespace DanceSchool.Configurations
 {
     using DanceSchool.Business.Models.Auth;
     using Microsoft.Extensions.Configuration;

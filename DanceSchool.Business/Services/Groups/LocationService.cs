@@ -1,4 +1,5 @@
-﻿using DanceSchool.Business.Interfaces.Courses;
+﻿using DanceSchool.Business.Interfaces;
+using DanceSchool.Business.Interfaces.Groups;
 using DanceSchool.Business.Models.Courses;
 using DanceSchool.Business.Models.Groups;
 using DanceSchool.DataAccess.Data;
@@ -7,7 +8,7 @@ using DanceSchool.DataAccess.Entities.Locations;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace DanceSchool.Business.Services.Courses
+namespace DanceSchool.Business.Services.Groups
 {
     public class LocationService : ILocationService
     {

@@ -1,8 +1,8 @@
-using DanceSchool.Business.Services.DanceStyle;
+using DanceSchool.Business.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DanceSchool.Api.Controllers
+namespace DanceSchool.Controllers
 {
     [ApiController]
     [Route("api/dance-styles")]
